@@ -209,16 +209,10 @@ class SettingsFragment : PreferenceFragmentCompat() {
         else -> super.onOptionsItemSelected(item)
     }
 
-    // TODO this should really get moved out off the UI layer
     private fun trySetBackupEnabled(enabled: Boolean): Boolean {
         return try {
             backupManager.isBackupEnabled = enabled
-            if (enabled) {
-                viewModel.scheduleAppBackup()
-                viewModel.enableCallLogBackup()
-            } else {
-                viewModel.cancelAppBackup()
-            }
+            viewModel.onBackupEnabled(enabled)
             backup.isChecked = enabled
             true
         } catch (e: RemoteException) {
