@@ -5,6 +5,7 @@ import androidx.activity.result.contract.ActivityResultContracts.CreateDocument
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreferenceCompat
+import com.google.android.mms.ContentType.TEXT_PLAIN
 import com.stevesoltys.seedvault.R
 import com.stevesoltys.seedvault.permitDiskReads
 import com.stevesoltys.seedvault.transport.backup.PackageService
@@ -16,10 +17,10 @@ class ExpertSettingsFragment : PreferenceFragmentCompat() {
     private val viewModel: SettingsViewModel by sharedViewModel()
     private val packageService: PackageService by inject()
 
-    // TODO set mimeType when upgrading androidx lib
-    private val createFileLauncher = registerForActivityResult(CreateDocument()) { uri ->
-        viewModel.onLogcatUriReceived(uri)
-    }
+    private val createFileLauncher =
+        registerForActivityResult(CreateDocument(TEXT_PLAIN)) { uri ->
+            viewModel.onLogcatUriReceived(uri)
+        }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         permitDiskReads {
