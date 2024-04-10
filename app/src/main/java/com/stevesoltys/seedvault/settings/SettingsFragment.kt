@@ -21,6 +21,7 @@ import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.TwoStatePreference
 import com.stevesoltys.seedvault.R
 import com.stevesoltys.seedvault.permitDiskReads
+import com.stevesoltys.seedvault.plugins.saf.SafStorage
 import com.stevesoltys.seedvault.restore.RestoreActivity
 import com.stevesoltys.seedvault.ui.toRelativeTime
 import org.koin.android.ext.android.inject
@@ -45,7 +46,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
     private var menuBackupNow: MenuItem? = null
     private var menuRestore: MenuItem? = null
 
-    private var storage: Storage? = null
+    private var safStorage: SafStorage? = null
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         permitDiskReads {
@@ -159,7 +160,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         // we need to re-set the title when returning to this fragment
         activity?.setTitle(R.string.backup)
 
-        storage = settingsManager.getStorage()
+        safStorage = settingsManager.getSafStorage()
         setBackupEnabledState()
         setBackupLocationSummary()
         setAutoRestoreState()
@@ -238,7 +239,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         activity?.contentResolver?.let {
             autoRestore.isChecked = Settings.Secure.getInt(it, BACKUP_AUTO_RESTORE, 1) == 1
         }
-        val storage = this.storage
+        val storage = this.safStorage
         if (storage?.isUsb == true) {
             autoRestore.summary = getString(R.string.settings_auto_restore_summary) + "\n\n" +
                 getString(R.string.settings_auto_restore_summary_usb, storage.name)
@@ -249,7 +250,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
     private fun setBackupLocationSummary() {
         // get name of storage location
-        backupLocation.summary = storage?.name ?: getString(R.string.settings_backup_location_none)
+        backupLocation.summary = safStorage?.name ?: getString(R.string.settings_backup_location_none)
     }
 
     private fun setAppBackupStatusSummary(

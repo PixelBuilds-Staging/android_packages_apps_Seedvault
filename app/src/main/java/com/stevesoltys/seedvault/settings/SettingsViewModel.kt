@@ -131,7 +131,7 @@ internal class SettingsViewModel(
     }
 
     override fun onStorageLocationChanged() {
-        val storage = settingsManager.getStorage() ?: return
+        val storage = settingsManager.getSafStorage() ?: return
 
         Log.i(TAG, "onStorageLocationChanged")
         if (storage.isUsb) {
@@ -148,7 +148,7 @@ internal class SettingsViewModel(
     }
 
     private fun onStoragePropertiesChanged() {
-        val storage = settingsManager.getStorage() ?: return
+        val storage = settingsManager.getSafStorage() ?: return
 
         Log.d(TAG, "onStoragePropertiesChanged")
         // register storage observer
@@ -200,7 +200,7 @@ internal class SettingsViewModel(
                 i.putExtra(EXTRA_START_APP_BACKUP, true)
                 startForegroundService(app, i)
             } else {
-                val isUsb = settingsManager.getStorage()?.isUsb ?: false
+                val isUsb = settingsManager.getSafStorage()?.isUsb ?: false
                 AppBackupWorker.scheduleNow(app, reschedule = !isUsb)
             }
         }
@@ -280,12 +280,12 @@ internal class SettingsViewModel(
     }
 
     fun scheduleAppBackup() {
-        val storage = settingsManager.getStorage() ?: error("no storage available")
+        val storage = settingsManager.getSafStorage() ?: error("no storage available")
         if (!storage.isUsb && backupManager.isBackupEnabled) AppBackupWorker.schedule(app)
     }
 
     fun scheduleFilesBackup() {
-        val storage = settingsManager.getStorage() ?: error("no storage available")
+        val storage = settingsManager.getSafStorage() ?: error("no storage available")
         if (!storage.isUsb && settingsManager.isStorageBackupEnabled()) {
             BackupJobService.scheduleJob(
                 context = app,
