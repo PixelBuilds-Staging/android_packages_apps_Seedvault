@@ -27,6 +27,7 @@ import androidx.lifecycle.switchMap
 import androidx.lifecycle.viewModelScope
 import androidx.recyclerview.widget.DiffUtil.calculateDiff
 import androidx.work.WorkManager
+import com.stevesoltys.seedvault.BackupStateManager
 import com.stevesoltys.seedvault.R
 import com.stevesoltys.seedvault.crypto.KeyManager
 import com.stevesoltys.seedvault.metadata.MetadataManager
@@ -44,6 +45,9 @@ import com.stevesoltys.seedvault.ui.notification.BackupNotificationManager
 import com.stevesoltys.seedvault.worker.AppBackupWorker
 import com.stevesoltys.seedvault.worker.AppBackupWorker.Companion.UNIQUE_WORK_NAME
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.calyxos.backup.storage.api.StorageBackup
@@ -66,6 +70,7 @@ internal class SettingsViewModel(
     private val storageBackup: StorageBackup,
     private val backupManager: IBackupManager,
     private val backupInitializer: BackupInitializer,
+    backupStateManager: BackupStateManager,
 ) : RequireProvisioningViewModel(app, settingsManager, keyManager, pluginManager) {
 
     private val contentResolver = app.contentResolver
@@ -75,6 +80,7 @@ internal class SettingsViewModel(
 
     override val isRestoreOperation = false
 
+    private val isBackupRunning: StateFlow<Boolean>
     private val mBackupPossible = MutableLiveData(false)
     val backupPossible: LiveData<Boolean> = mBackupPossible
 
@@ -125,9 +131,18 @@ internal class SettingsViewModel(
             // this shouldn't cause disk reads, but it still does
             viewModelScope
         }
+        isBackupRunning = backupStateManager.isBackupRunning.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = false,
+        )
         scope.launch {
             // ensures the lastBackupTime LiveData gets set
             metadataManager.getLastBackupTime()
+            // update running state
+            isBackupRunning.collect {
+                onBackupRunningStateChanged()
+            }
         }
         onStoragePropertiesChanged()
         loadFilesSummary()
@@ -148,6 +163,14 @@ internal class SettingsViewModel(
             scheduleFilesBackup()
         }
         onStoragePropertiesChanged()
+    }
+
+    private fun onBackupRunningStateChanged() {
+        if (isBackupRunning.value) mBackupPossible.postValue(false)
+        else viewModelScope.launch(Dispatchers.IO) {
+            val canDo = !isBackupRunning.value && !pluginManager.isOnUnavailableUsb()
+            mBackupPossible.postValue(canDo)
+        }
     }
 
     private fun onStoragePropertiesChanged() {
@@ -172,17 +195,15 @@ internal class SettingsViewModel(
             connectivityManager?.unregisterNetworkCallback(networkCallback)
             networkCallback.registered = false
         } else if (!networkCallback.registered && storage.requiresNetwork) {
+            // TODO we may want to warn the user when they start a backup on a metered connection
             val request = NetworkRequest.Builder()
                 .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
                 .build()
             connectivityManager?.registerNetworkCallback(request, networkCallback)
             networkCallback.registered = true
         }
-
-        viewModelScope.launch(Dispatchers.IO) {
-            val canDo = settingsManager.canDoBackupNow()
-            mBackupPossible.postValue(canDo)
-        }
+        // update whether we can do backups right now or not
+        onBackupRunningStateChanged()
     }
 
     override fun onCleared() {
