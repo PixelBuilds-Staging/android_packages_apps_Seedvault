@@ -22,6 +22,7 @@ import com.stevesoltys.seedvault.BackupMonitor
 import com.stevesoltys.seedvault.MAGIC_PACKAGE_MANAGER
 import com.stevesoltys.seedvault.R
 import com.stevesoltys.seedvault.crypto.KeyManager
+import com.stevesoltys.seedvault.metadata.PackageMetadataMap
 import com.stevesoltys.seedvault.metadata.PackageState.APK_AND_DATA
 import com.stevesoltys.seedvault.metadata.PackageState.NOT_ALLOWED
 import com.stevesoltys.seedvault.metadata.PackageState.NO_DATA
@@ -32,6 +33,7 @@ import com.stevesoltys.seedvault.restore.DisplayFragment.RESTORE_APPS
 import com.stevesoltys.seedvault.restore.DisplayFragment.RESTORE_BACKUP
 import com.stevesoltys.seedvault.restore.DisplayFragment.RESTORE_FILES
 import com.stevesoltys.seedvault.restore.DisplayFragment.RESTORE_FILES_STARTED
+import com.stevesoltys.seedvault.restore.DisplayFragment.SELECT_APPS
 import com.stevesoltys.seedvault.restore.install.ApkRestore
 import com.stevesoltys.seedvault.restore.install.InstallIntentCreator
 import com.stevesoltys.seedvault.restore.install.InstallResult
@@ -66,12 +68,16 @@ import org.calyxos.backup.storage.api.StorageBackup
 import org.calyxos.backup.storage.restore.RestoreService.Companion.EXTRA_TIMESTAMP_START
 import org.calyxos.backup.storage.restore.RestoreService.Companion.EXTRA_USER_ID
 import org.calyxos.backup.storage.ui.restore.SnapshotViewModel
-import java.lang.IllegalStateException
 import java.util.LinkedList
 
 private val TAG = RestoreViewModel::class.java.simpleName
 
 internal const val PACKAGES_PER_CHUNK = NUM_PACKAGES_PER_TRANSACTION
+
+internal class SelectedAppsState(
+    val apps: List<SelectableAppItem>,
+    val allSelected: Boolean,
+)
 
 internal class RestoreViewModel(
     app: Application,
@@ -98,6 +104,9 @@ internal class RestoreViewModel(
 
     private val mChosenRestorableBackup = MutableLiveData<RestorableBackup>()
     internal val chosenRestorableBackup: LiveData<RestorableBackup> get() = mChosenRestorableBackup
+
+    private val mSelectedApps = MutableLiveData<SelectedAppsState>()
+    internal val selectedApps: LiveData<SelectedAppsState> get() = mSelectedApps
 
     internal val installResult: LiveData<InstallResult> =
         switchMap(mChosenRestorableBackup) { backup ->
@@ -157,6 +166,63 @@ internal class RestoreViewModel(
 
     override fun onRestorableBackupClicked(restorableBackup: RestorableBackup) {
         mChosenRestorableBackup.value = restorableBackup
+        val items = restorableBackup.packageMetadataMap.mapNotNull { (packageName, metadata) ->
+            if (metadata.time == 0L && !metadata.hasApk()) null
+            else if (packageName == MAGIC_PACKAGE_MANAGER) null
+            else SelectableAppItem(packageName, metadata, true)
+        }.sortedWith { i1, i2 ->
+            if (i1.metadata.system == i2.metadata.system) i1.name.compareTo(i2.name, true)
+            else i1.metadata.system.compareTo(i2.metadata.system)
+        }
+        mSelectedApps.value = SelectedAppsState(items, true)
+        mDisplayFragment.setEvent(SELECT_APPS)
+    }
+
+    fun onCheckAllAppsClicked() {
+        val apps = selectedApps.value?.apps ?: return
+        val allSelected = apps.all { it.selected }
+        if (allSelected) {
+            // unselect all
+            val newApps = apps.map { if (it.selected) it.copy(selected = false) else it }
+            mSelectedApps.value = SelectedAppsState(newApps, false)
+        } else {
+            // select all
+            val newApps = apps.map { if (!it.selected) it.copy(selected = true) else it }
+            mSelectedApps.value = SelectedAppsState(newApps, true)
+        }
+    }
+
+    fun onAppSelected(item: SelectableAppItem) {
+        val apps = selectedApps.value?.apps?.toMutableList() ?: return
+        val iterator = apps.listIterator()
+        var allSelected = true
+        while (iterator.hasNext()) {
+            val app = iterator.next()
+            if (app.packageName == item.packageName) {
+                iterator.set(item.copy(selected = !item.selected))
+                allSelected = allSelected && !item.selected
+            } else {
+                allSelected = allSelected && app.selected
+            }
+        }
+        mSelectedApps.value = SelectedAppsState(apps, allSelected)
+    }
+
+    internal fun onNextClickedAfterSelectingApps() {
+        val backup = chosenRestorableBackup.value ?: error("No chosen backup")
+        // map packages names to selection state
+        val apps = selectedApps.value?.apps?.associate {
+            Pair(it.packageName, it.selected)
+        } ?: error("no selected apps")
+        // filter out unselected packages
+        val packages = backup.packageMetadataMap.filterKeys { packageName ->
+            apps[packageName] != true // packages that weren't found, won't get filtered
+        } as PackageMetadataMap
+        // replace original chosen backup with unselected packages removed
+        mChosenRestorableBackup.value = backup.copy(
+            backupMetadata = backup.backupMetadata.copy(packageMetadataMap = packages),
+        )
+        // tell UI to move to InstallFragment
         mDisplayFragment.setEvent(RESTORE_APPS)
     }
 
@@ -468,5 +534,5 @@ internal class RestoreBackupResult(val errorMsg: String? = null) {
 }
 
 internal enum class DisplayFragment {
-    RESTORE_APPS, RESTORE_BACKUP, RESTORE_FILES, RESTORE_FILES_STARTED
+    SELECT_APPS, RESTORE_APPS, RESTORE_BACKUP, RESTORE_FILES, RESTORE_FILES_STARTED
 }
