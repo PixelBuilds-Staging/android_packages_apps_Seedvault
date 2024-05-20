@@ -11,6 +11,7 @@ import android.widget.ProgressBar
 import android.widget.Switch
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.checkbox.MaterialCheckBox
 import com.stevesoltys.seedvault.R
 import com.stevesoltys.seedvault.ui.AppBackupState.FAILED
 import com.stevesoltys.seedvault.ui.AppBackupState.IN_PROGRESS
@@ -27,7 +28,7 @@ internal abstract class AppViewHolder(protected val v: View) : RecyclerView.View
     protected val appInfo: TextView = v.findViewById(R.id.appInfo)
     protected val appStatus: ImageView = v.findViewById(R.id.appStatus)
     protected val progressBar: ProgressBar = v.findViewById(R.id.progressBar)
-    protected val switchView: Switch = v.findViewById(R.id.switchView)
+    protected val checkBox: MaterialCheckBox = v.requireViewById(R.id.checkboxView)
 
     init {
         // don't use clickable background by default
