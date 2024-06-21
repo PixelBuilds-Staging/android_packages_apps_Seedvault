@@ -230,12 +230,13 @@ internal class SettingsViewModel(
         } else if (!backupManager.isBackupEnabled) {
             Toast.makeText(app, R.string.notification_backup_disabled, LENGTH_LONG).show()
         } else viewModelScope.launch(Dispatchers.IO) {
+            val isAppBackupEnabled = backupManager.isBackupEnabled
             if (settingsManager.isStorageBackupEnabled()) {
                 val i = Intent(app, StorageBackupService::class.java)
-                // this starts an app backup afterwards
-                i.putExtra(EXTRA_START_APP_BACKUP, true)
+                // this starts an app backup afterwards (if enabled)
+                i.putExtra(EXTRA_START_APP_BACKUP, isAppBackupEnabled)
                 startForegroundService(app, i)
-            } else {
+            } else if (isAppBackupEnabled) {
                 AppBackupWorker.scheduleNow(app, reschedule = !pluginManager.isOnRemovableDrive)
             }
         }
