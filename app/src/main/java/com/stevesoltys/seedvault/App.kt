@@ -19,6 +19,7 @@ import android.os.UserHandle
 import android.os.UserManager
 import android.provider.Settings
 import androidx.work.WorkManager
+import com.google.android.material.color.DynamicColors
 import com.stevesoltys.seedvault.crypto.cryptoModule
 import com.stevesoltys.seedvault.header.headerModule
 import com.stevesoltys.seedvault.metadata.MetadataManager
@@ -113,6 +114,7 @@ open class App : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        DynamicColors.applyToActivitiesIfAvailable(this)
         startKoin()
         if (isDebugBuild()) {
             StrictMode.setThreadPolicy(
