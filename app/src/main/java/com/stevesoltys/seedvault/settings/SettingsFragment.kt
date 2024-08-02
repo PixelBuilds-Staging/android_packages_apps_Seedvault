@@ -29,6 +29,7 @@ import com.stevesoltys.seedvault.permitDiskReads
 import com.stevesoltys.seedvault.plugins.StoragePluginManager
 import com.stevesoltys.seedvault.plugins.StorageProperties
 import com.stevesoltys.seedvault.restore.RestoreActivity
+import com.stevesoltys.seedvault.ui.notification.BackupNotificationManager
 import com.stevesoltys.seedvault.ui.toRelativeTime
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
@@ -40,6 +41,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
     private val viewModel: SettingsViewModel by sharedViewModel()
     private val storagePluginManager: StoragePluginManager by inject()
     private val backupManager: IBackupManager by inject()
+    private val notificationManager: BackupNotificationManager by inject()
 
     private lateinit var backup: TwoStatePreference
     private lateinit var autoRestore: TwoStatePreference
@@ -180,6 +182,24 @@ class SettingsFragment : PreferenceFragmentCompat() {
             lastBackupInMillis = viewModel.lastBackupTime.value,
             nextScheduleTimeMillis = viewModel.nextScheduleTimeMillis.value,
         )
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Activity results from the parent will get delivered before and might tell us to finish.
+        // Don't start any new activities when that happens.
+        // Note: onStart() can get called *before* results get delivered, so we use onResume() here
+        if (requireActivity().isFinishing) return
+
+        // check that backup is provisioned
+        val activity = requireActivity() as SettingsActivity
+        if (!viewModel.recoveryCodeIsSet()) {
+            activity.showRecoveryCodeActivity()
+        } else if (!viewModel.validLocationIsSet()) {
+            activity.showStorageActivity()
+            // remove potential error notifications
+            notificationManager.onBackupErrorSeen()
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
