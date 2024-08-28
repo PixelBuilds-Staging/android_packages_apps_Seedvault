@@ -47,6 +47,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -766,6 +767,14 @@ internal class ApkRestoreTest : TransportTest() {
     }
 
     private suspend fun TurbineTestContext<InstallResult>.awaitInProgressItem(): InstallResult {
+        awaitItem().also { item ->
+            val result = item[packageName]
+            assertEquals(IN_PROGRESS, result.state)
+            assertFalse(item.hasFailed)
+            assertEquals(1, item.total)
+            assertEquals(1, item.list.size)
+            assertNull(result.icon)
+        }
         val item = awaitItem()
         // name and icon are available now
         val result = item[packageName]
