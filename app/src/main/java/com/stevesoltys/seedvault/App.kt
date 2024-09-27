@@ -113,6 +113,7 @@ open class App : Application() {
         super.onCreate()
         DynamicColors.applyToActivitiesIfAvailable(this)
         startKoin()
+        if (!isTest) migrateToOwnScheduling()
         if (isDebugBuild()) {
             StrictMode.setThreadPolicy(
                 StrictMode.ThreadPolicy.Builder()
@@ -128,7 +129,6 @@ open class App : Application() {
                     .build()
             )
         }
-        if (!isTest) migrateToOwnScheduling()
     }
 
     protected open fun startKoin() = startKoin {
