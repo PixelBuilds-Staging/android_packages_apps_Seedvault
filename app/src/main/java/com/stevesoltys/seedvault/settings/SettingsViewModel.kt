@@ -83,7 +83,8 @@ internal class SettingsViewModel(
     override val isRestoreOperation = false
     val isFirstStart get() = settingsManager.isFirstStart
 
-    val isBackupRunning: StateFlow<Boolean>
+    private val isBackupRunning: StateFlow<Boolean>
+    private val isCheckOrPruneRunning: StateFlow<Boolean>
     private val mBackupPossible = MutableLiveData(false)
     val backupPossible: LiveData<Boolean> = mBackupPossible
 
@@ -145,9 +146,20 @@ internal class SettingsViewModel(
             started = SharingStarted.Eagerly,
             initialValue = false,
         )
+        isCheckOrPruneRunning = backupStateManager.isCheckOrPruneRunning.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = false,
+        )
         scope.launch {
             // update running state
             isBackupRunning.collect {
+                onBackupRunningStateChanged()
+            }
+        }
+        scope.launch {
+            // update running state
+            isCheckOrPruneRunning.collect {
                 onBackupRunningStateChanged()
             }
         }
@@ -173,11 +185,11 @@ internal class SettingsViewModel(
     }
 
     private fun onBackupRunningStateChanged() {
-        if (isBackupRunning.value) mBackupPossible.postValue(false)
-        else viewModelScope.launch(Dispatchers.IO) {
-            val canDo = !isBackupRunning.value && !backendManager.isOnUnavailableUsb()
+        val backupAllowed = !isBackupRunning.value && !isCheckOrPruneRunning.value
+        if (backupAllowed) viewModelScope.launch(Dispatchers.IO) {
+            val canDo = !backendManager.isOnUnavailableUsb()
             mBackupPossible.postValue(canDo)
-        }
+        } else mBackupPossible.postValue(false)
     }
 
     private fun onStoragePropertiesChanged() {
