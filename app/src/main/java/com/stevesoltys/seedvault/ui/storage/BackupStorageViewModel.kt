@@ -49,6 +49,7 @@ internal class BackupStorageViewModel(
 
     @UiThread
     override fun onSafUriSet(safProperties: SafProperties) {
+        Log.i(TAG, "onSafUriSet(${safProperties.uri})")
         safHandler.save(safProperties)
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
@@ -57,13 +58,14 @@ internal class BackupStorageViewModel(
             withContext(Dispatchers.Main) { // UiThread
                 if (safProperties.isUsb) {
                     // disable storage backup if new storage is on USB
+                    Log.i(TAG, "Cancel backup workers, because we are on USB.")
                     cancelBackupWorkers()
                 } else {
                     // enable it, just in case the previous storage was on USB,
                     // also to update the network requirement of the new storage
                     scheduleBackupWorkers()
                 }
-                onStorageLocationSet(safProperties.isUsb)
+                onNewBackendSet(safProperties.isUsb)
             }
         }
     }
@@ -76,12 +78,12 @@ internal class BackupStorageViewModel(
             }
             withContext(Dispatchers.Main) {
                 scheduleBackupWorkers()
-                onStorageLocationSet(isUsb = false)
+                onNewBackendSet(isUsb = false)
             }
         }
     }
 
-    private fun onStorageLocationSet(isUsb: Boolean) {
+    private fun onNewBackendSet(isUsb: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 // remove old storage snapshots and clear cache
@@ -113,16 +115,18 @@ internal class BackupStorageViewModel(
     }
 
     private fun scheduleBackupWorkers() {
-        val storage = backendManager.backendProperties ?: error("no storage available")
+        val backendProperties = backendManager.backendProperties ?: error("no storage available")
         // disable framework scheduling, because another transport may have enabled it
         backupManager.setFrameworkSchedulingEnabledForUser(UserHandle.myUserId(), false)
-        if (!storage.isUsb) {
-            if (backupManager.isBackupEnabled) AppBackupWorker.schedule(app)
+        if (!backendProperties.isUsb) {
+            if (backupManager.isBackupEnabled) {
+                AppBackupWorker.schedule(app)
+            }
             if (settingsManager.isStorageBackupEnabled()) BackupJobService.scheduleJob(
                 context = app,
                 jobServiceClass = StorageBackupJobService::class.java,
                 periodMillis = TimeUnit.HOURS.toMillis(24),
-                networkType = if (storage.requiresNetwork) JobInfo.NETWORK_TYPE_UNMETERED
+                networkType = if (backendProperties.requiresNetwork) JobInfo.NETWORK_TYPE_UNMETERED
                 else JobInfo.NETWORK_TYPE_NONE,
                 deviceIdle = false,
                 charging = true
