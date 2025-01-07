@@ -122,6 +122,8 @@ internal class BackupStorageViewModel(
             if (backupManager.isBackupEnabled) {
                 AppBackupWorker.schedule(app)
             }
+            // FIXME this runs a backup right away (if constraints fulfilled)
+            //  and JobScheduler doesn't offer initial delay
             if (settingsManager.isStorageBackupEnabled()) BackupJobService.scheduleJob(
                 context = app,
                 jobServiceClass = StorageBackupJobService::class.java,
