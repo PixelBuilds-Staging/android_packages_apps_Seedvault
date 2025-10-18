@@ -314,7 +314,6 @@ internal class SettingsViewModel(
     }
 
     fun scheduleAppBackup() {
-        val storage = settingsManager.getSafStorage() ?: error("no storage available")
         if (!pluginManager.isOnRemovableDrive && backupManager.isBackupEnabled) {
             AppBackupWorker.schedule(app)
         }
