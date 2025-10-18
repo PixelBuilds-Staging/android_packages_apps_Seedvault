@@ -289,8 +289,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
     /**
      * Sets the summary for scheduling which is information about when the next backup is scheduled.
      *
-     * It could be that it shows the backup as running,
-     * gives an estimate about when the next run will be or
+     * It could be that it shows the backup as running or
      * says that nothing is scheduled which can happen when backup destination is on flash drive.
      */
     private fun setAppBackupSchedulingSummary(workInfo: WorkInfo?) {
@@ -299,26 +298,12 @@ class SettingsFragment : PreferenceFragmentCompat() {
             return
         }
 
-        val nextScheduleTimeMillis = workInfo?.nextScheduleTimeMillis ?: Long.MAX_VALUE
         if (workInfo != null && workInfo.state == WorkInfo.State.RUNNING) {
             val text = getString(R.string.notification_title)
             backupScheduling.summary = getString(R.string.settings_backup_status_next_backup, text)
-        } else if (nextScheduleTimeMillis == Long.MAX_VALUE) {
-            Log.i(TAG, "No backup scheduled! workInfo: $workInfo")
-            val text = getString(R.string.settings_backup_last_backup_never)
-            backupScheduling.summary = getString(R.string.settings_backup_status_next_backup, text)
         } else {
-            val diff = System.currentTimeMillis() - nextScheduleTimeMillis
-            val isPast = diff > TimeUnit.MINUTES.toMillis(1)
-            if (isPast) {
-                val text = getString(R.string.settings_backup_status_next_backup_past)
-                backupScheduling.summary =
-                    getString(R.string.settings_backup_status_next_backup, text)
-            } else {
-                val text = nextScheduleTimeMillis.toRelativeTime(requireContext())
-                backupScheduling.summary =
-                    getString(R.string.settings_backup_status_next_backup_estimate, text)
-            }
+            backupScheduling.summary = null
+            Log.i(TAG, "No backup running! workInfo: $workInfo")
         }
     }
 
