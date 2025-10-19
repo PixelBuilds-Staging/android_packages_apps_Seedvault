@@ -41,7 +41,7 @@ lint-rules = { strictly = "0.1.0" }
 
 # Logging libs (check versions at /libs)
 logging = { strictly = "6.0.3" }
-slf4j-api = { strictly = "2.0.16" }
+slf4j-api = { strictly = "2.0.0" }
 
 # Google versions
 # https://android.googlesource.com/platform/external/protobuf/+/refs/tags/android-14.0.0_r53/java/pom.xml#7

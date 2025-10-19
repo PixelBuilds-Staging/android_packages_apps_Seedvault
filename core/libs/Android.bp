@@ -17,6 +17,6 @@ java_import {
 
 java_import {
     name: "seedvault-lib-slf4j-api",
-    jars: ["slf4j-api-2.0.16.jar"],
+    jars: ["slf4j-api-2.0.0.jar"],
     sdk_version: "current",
 }
