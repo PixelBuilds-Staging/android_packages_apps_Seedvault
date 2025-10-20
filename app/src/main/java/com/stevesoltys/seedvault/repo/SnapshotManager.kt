@@ -5,7 +5,6 @@
 
 package com.stevesoltys.seedvault.repo
 
-import com.github.luben.zstd.ZstdOutputStream
 import com.stevesoltys.seedvault.backend.BackendManager
 import com.stevesoltys.seedvault.crypto.Crypto
 import com.stevesoltys.seedvault.header.UnsupportedVersionException
@@ -78,11 +77,11 @@ internal class SnapshotManager(
      */
     @Throws(IOException::class)
     suspend fun saveSnapshot(snapshot: Snapshot) {
-        // compress payload and get size
+        // write payload and get size
         val payloadStream = ByteArrayOutputStream()
-        ZstdOutputStream(payloadStream).use { zstdOutputStream ->
-            snapshot.writeTo(zstdOutputStream)
-        }
+
+        snapshot.writeTo(payloadStream)
+        
         val payloadSize = payloadStream.size()
         val payloadSizeBytes = ByteBuffer.allocate(4).putInt(payloadSize).array()
 

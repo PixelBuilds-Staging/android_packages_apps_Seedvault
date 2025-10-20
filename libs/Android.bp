@@ -4,13 +4,6 @@
 //
 
 android_library_import {
-    name: "seedvault-lib-zstd-jni",
-    aars: ["zstd-jni-1.5.6-5.aar"],
-    sdk_version: "current",
-    extract_jni: true,
-}
-
-android_library_import {
     name: "seedvault-logback-android",
     aars: ["logback-android-3.0.0.aar"],
     sdk_version: "current",

@@ -5,7 +5,6 @@
 
 package com.stevesoltys.seedvault.repo
 
-import com.github.luben.zstd.ZstdInputStream
 import com.stevesoltys.seedvault.backend.BackendManager
 import com.stevesoltys.seedvault.crypto.Crypto
 import com.stevesoltys.seedvault.header.UnsupportedVersionException
@@ -105,7 +104,7 @@ internal class Loader(
         // decrypt, de-pad and decompress cipherText stream
         val decryptingStream = crypto.newDecryptingStream(byteStream, ad)
         val paddedStream = PaddedInputStream(decryptingStream)
-        return ZstdInputStream(paddedStream)
+        return paddedStream
     }
 
 }

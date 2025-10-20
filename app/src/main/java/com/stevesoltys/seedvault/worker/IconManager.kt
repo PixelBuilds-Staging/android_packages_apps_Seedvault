@@ -35,7 +35,7 @@ import java.io.InputStream
 import java.nio.ByteBuffer
 import java.nio.file.attribute.FileTime
 import java.security.GeneralSecurityException
-import java.util.zip.Deflater.NO_COMPRESSION
+import java.util.zip.Deflater.BEST_SPEED
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
@@ -62,7 +62,7 @@ internal class IconManager(
         val packageManager = context.packageManager
         val byteArrayOutputStream = ByteArrayOutputStream()
         ZipOutputStream(byteArrayOutputStream).use { zip ->
-            zip.setLevel(NO_COMPRESSION) // we compress with zstd after chunking the zip
+            zip.setLevel(BEST_SPEED)
             val entries = mutableSetOf<String>()
             // sort packages by package name to get deterministic ZIP
             packageService.allUserPackages.sortedBy { it.packageName }.forEach {

@@ -42,7 +42,6 @@ android_app {
         "seedvault-lib-protobuf-kotlin-lite",
         "seedvault-logback-android",
         "seedvault-lib-chunker",
-        "seedvault-lib-zstd-jni",
         "okio-lib",
         // our own gradle module libs
         "seedvault-lib-core",
@@ -53,7 +52,6 @@ android_app {
         // bip39
         "seedvault-lib-kotlin-bip39",
     ],
-    use_embedded_native_libs: true,
     manifest: "app/src/main/AndroidManifest.xml",
 
     platform_apis: true,

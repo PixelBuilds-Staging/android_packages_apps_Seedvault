@@ -105,20 +105,19 @@ followed by an encrypted and authenticated payload (see also [Cryptography](#cry
 The version (currently `0x02`) is used to be able to modify aspects of the design in the future
 and to provide backwards compatibility.
 
-The first four bytes of the decrypted payload encode the compressed plaintext size
+The first four bytes of the decrypted payload encode the plaintext size
 as a signed 32-bit integer.
 So the maximum chunk size is 2147483647 bytes.
-This size specifies where the compressed plaintext ends and the (to be discarded) padding starts.
+This size specifies where the plaintext ends and the (to be discarded) padding starts.
 
 Blob payloads include the raw bytes of the compressed chunks and always get padded.
 Snapshot payloads include their compressed protobuf encoding and do not get padded.
-Compression is using the [zstd](http://www.zstd.net/) algorithm in its default configuration.
 
 ```console
 ┏━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃         ┃ encrypted tink payload (with 40 bytes header) ┃
 ┃ version ┃ ┏━ plaintext ━┳━━━━━━━━━━━━┳━━━━━━━━━━━━┓     ┃
-┃ 1 byte  ┃ ┃ size uint32 ┃ compressed ┃  padding   ┃     ┃
+┃ 1 byte  ┃ ┃ size uint32 ┃            ┃  padding   ┃     ┃
 ┃  (0x02) ┃ ┃   4 bytes   ┃ plaintext  ┃ (optional) ┃     ┃
 ┃         ┃ ┗━━━━━━━━━━━━━┻━━━━━━━━━━━━┻━━━━━━━━━━━━┛     ┃
 ┗━━━━━━━━━┻━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
@@ -132,8 +131,7 @@ in [Stream Encryption](#stream-encryption).
 Snapshots include information about the state of a collection of apps
 that have been backed up at some point in time.
 
-It is encoded [in protobuf format](../app/src/main/proto/snapshot.proto), compressed with zstd
-and encrypted.
+It is encoded [in protobuf format](../app/src/main/proto/snapshot.proto) and encrypted.
 
 Example printed as JSON:
 

@@ -6,7 +6,6 @@
 package com.stevesoltys.seedvault.repo
 
 import androidx.annotation.WorkerThread
-import com.github.luben.zstd.ZstdOutputStream
 import com.google.protobuf.ByteString
 import com.stevesoltys.seedvault.backend.BackendManager
 import com.stevesoltys.seedvault.crypto.Crypto
@@ -44,10 +43,9 @@ internal class BlobCreator(
         payloadBuffer.clear()
         buffer.clear()
 
-        // compress payload and get size
-        ZstdOutputStream(payloadBuffer.outputStream()).use { zstdOutputStream ->
-            zstdOutputStream.write(chunk.data)
-        }
+        // write raw payload
+        payloadBuffer.write(chunk.data)
+
         val payloadSize = payloadBuffer.size.toInt()
         val payloadSizeBytes = ByteBuffer.allocate(4).putInt(payloadSize).array()
         val paddingSize = getPadTo(payloadSize) - payloadSize

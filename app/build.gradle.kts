@@ -174,7 +174,6 @@ dependencies {
         fileTree("${rootProject.rootDir}/libs").include("protobuf-kotlin-lite-3.21.12.jar")
     )
     implementation(fileTree("${rootProject.rootDir}/libs").include("seedvault-chunker-0.1.jar"))
-    implementation(fileTree("${rootProject.rootDir}/libs").include("zstd-jni-1.5.6-5.aar"))
     implementation(fileTree("${rootProject.rootDir}/libs").include("kotlin-bip39-jvm-1.0.8.jar"))
     implementation(fileTree("${rootProject.rootDir}/libs").include("logback-android-3.0.0.aar"))
 
@@ -197,7 +196,6 @@ dependencies {
     )
     testImplementation("app.cash.turbine:turbine:1.0.0")
     testImplementation("org.bitcoinj:bitcoinj-core:0.16.2")
-    testImplementation("com.github.luben:zstd-jni:1.5.6-5")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${libs.versions.junit5.get()}")
     testRuntimeOnly("org.junit.vintage:junit-vintage-engine:${libs.versions.junit5.get()}")
 

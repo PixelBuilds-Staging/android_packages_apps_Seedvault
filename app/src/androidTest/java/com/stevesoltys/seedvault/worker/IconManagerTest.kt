@@ -9,7 +9,6 @@ import android.content.pm.PackageInfo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.MediumTest
 import androidx.test.platform.app.InstrumentationRegistry
-import com.github.luben.zstd.ZstdOutputStream
 import com.google.protobuf.ByteString
 import com.stevesoltys.seedvault.MAGIC_PACKAGE_MANAGER
 import com.stevesoltys.seedvault.metadata.BackupType
@@ -117,12 +116,9 @@ class IconManagerTest : KoinComponent {
 
         assertArrayEquals(output1.captured, output2.captured)
 
-        // print compressed and uncompressed size
+        // print size
         val size = output1.captured.size.toFloat() / 1024 / 1024
-        val outputStream = ByteArrayOutputStream()
-        ZstdOutputStream(outputStream).use { it.write(output1.captured) }
-        val compressedSize = outputStream.size().toFloat() / 1024 / 1024
-        println("Icon size: $size MB, compressed $compressedSize MB")
+        println("Icon size: $size MB")
     }
 
 }
